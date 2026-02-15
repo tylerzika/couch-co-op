@@ -1,0 +1,5 @@
+module CMathLib {
+    header "math_lib.h"
+    link "math_lib"
+    export *
+}
