@@ -22,6 +22,11 @@ class PalletTownGame {
         this.gridMovement = true;
         // Track the first key pressed to ignore simultaneous keys
         this.firstKey = null;
+        // Repeat-on-hold settings (ms)
+        this.repeatDelay = 300; // delay before repeating
+        this.repeatInterval = 120; // interval between repeats
+        this._repeatTimeout = null;
+        this._repeatTimer = null;
         
         // Player
         this.player = {
@@ -80,6 +85,25 @@ class PalletTownGame {
                     if (key === 'r') {
                         this.resetPlayer();
                     }
+                    // start repeat-on-hold timer
+                    const dirForKey = (k) => {
+                        if (k === 'w' || k === 'arrowup') return 'up';
+                        if (k === 's' || k === 'arrowdown') return 'down';
+                        if (k === 'a' || k === 'arrowleft') return 'left';
+                        if (k === 'd' || k === 'arrowright') return 'right';
+                        return null;
+                    };
+
+                    const repeatDir = dirForKey(key);
+                    if (repeatDir) {
+                        // set timeout to start repeating
+                        this._repeatTimeout = setTimeout(() => {
+                            // begin interval repeats
+                            this._repeatTimer = setInterval(() => {
+                                this.attemptGridMove(repeatDir);
+                            }, this.repeatInterval);
+                        }, this.repeatDelay);
+                    }
                 } else {
                     // Ignore other keys while firstKey is held
                 }
@@ -92,7 +116,12 @@ class PalletTownGame {
             const key = e.key.toLowerCase();
             this.keys[key] = false;
             // If the released key was the first key, clear it so next key becomes active
-            if (this.firstKey === key) this.firstKey = null;
+            if (this.firstKey === key) {
+                this.firstKey = null;
+                // clear repeat timers
+                if (this._repeatTimeout) { clearTimeout(this._repeatTimeout); this._repeatTimeout = null; }
+                if (this._repeatTimer) { clearInterval(this._repeatTimer); this._repeatTimer = null; }
+            }
         });
         
         // Touch controls for mobile
